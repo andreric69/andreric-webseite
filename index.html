@@ -1,8 +1,297 @@
 <!doctype html>
-<html>
-  <head><title>Meine Seite</title></head>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dinosaurier Spiel</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Inter, system-ui, sans-serif;
+        background: linear-gradient(180deg, #87ceeb 0%, #c8f3ff 50%, #f5f5f5 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        color: #333;
+      }
+
+      .container {
+        width: min(950px, 100%);
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 24px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+        overflow: hidden;
+      }
+
+      header {
+        padding: 24px 28px 0;
+      }
+
+      h1 {
+        font-size: clamp(2rem, 2.4vw, 3rem);
+        margin-bottom: 12px;
+      }
+
+      p {
+        margin-bottom: 20px;
+        max-width: 720px;
+        line-height: 1.6;
+        color: #555;
+      }
+
+      .game-board {
+        position: relative;
+        width: 100%;
+        height: 260px;
+        background: linear-gradient(180deg, #e8f6ff 0%, #e1f2ff 35%, #f5f5f5 100%);
+        border-top: 4px solid #9ecbe1;
+        border-bottom: 4px solid #9ecbe1;
+        overflow: hidden;
+      }
+
+      .ground {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 28px;
+        background: linear-gradient(90deg, #7a9fbc 0%, #a4c4e1 100%);
+      }
+
+      .dino {
+        position: absolute;
+        bottom: 28px;
+        left: 48px;
+        width: 48px;
+        height: 48px;
+        background: #333;
+        border-radius: 12px;
+        box-shadow: inset -8px -6px 0 rgba(255, 255, 255, 0.18);
+        transition: transform 0.12s ease-out;
+      }
+
+      .dino.jump {
+        animation: jump 400ms ease-out forwards;
+      }
+
+      @keyframes jump {
+        0% { transform: translateY(0); }
+        40% { transform: translateY(-120px); }
+        100% { transform: translateY(0); }
+      }
+
+      .obstacle {
+        position: absolute;
+        bottom: 28px;
+        width: 18px;
+        height: 44px;
+        background: #414141;
+        border-radius: 6px;
+      }
+
+      .scoreboard {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 28px 24px;
+      }
+
+      .score {
+        font-size: 1.1rem;
+        font-weight: 700;
+      }
+
+      .message {
+        color: #0c4a64;
+      }
+
+      .hint {
+        margin-top: 6px;
+        font-size: 0.95rem;
+        color: #5a7184;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 18px;
+        border-radius: 999px;
+        border: none;
+        color: #fff;
+        background: #0f5fab;
+        cursor: pointer;
+        font-weight: 700;
+        transition: transform 0.15s ease, background 0.2s ease;
+      }
+
+      .button:hover {
+        transform: translateY(-1px);
+        background: #0d4d93;
+      }
+
+      .footer {
+        padding: 0 28px 24px;
+        color: #5a7184;
+        font-size: 0.95rem;
+      }
+    </style>
+  </head>
   <body>
-    <h1>Hallo Welt</h1>
-    <p>Das ist meine erste Webseite.</p>
+    <div class="container">
+      <header>
+        <h1>Dinosaurier Spiel</h1>
+        <p>Springe über die Hindernisse wie beim bekannten Google Chrome Offline-Spiel. Verwende die Leertaste oder tippe auf den Bildschirm, um zu springen.</p>
+      </header>
+
+      <div class="game-board" id="gameBoard">
+        <div class="dino" id="dino"></div>
+        <div class="ground"></div>
+      </div>
+
+      <div class="scoreboard">
+        <div class="score">Punkte: <span id="score">0</span></div>
+        <button class="button" id="restartButton">Neu starten</button>
+      </div>
+
+      <div class="footer">
+        <div class="message" id="message">Drücke Leertaste oder tippe, um zu springen.</div>
+        <div class="hint">Wenn du gegen ein Hindernis stößt, kannst du mit „Neu starten“ wieder beginnen.</div>
+      </div>
+    </div>
+
+    <script>
+      const dino = document.getElementById('dino');
+      const gameBoard = document.getElementById('gameBoard');
+      const scoreElement = document.getElementById('score');
+      const messageElement = document.getElementById('message');
+      const restartButton = document.getElementById('restartButton');
+
+      let score = 0;
+      let isJumping = false;
+      let isGameOver = false;
+      let speed = 8;
+      let obstacleTimer;
+      let scoreTimer;
+
+      function resetGame() {
+        score = 0;
+        isJumping = false;
+        isGameOver = false;
+        speed = 8;
+        scoreElement.textContent = '0';
+        messageElement.textContent = 'Drücke Leertaste oder tippe, um zu springen.';
+        document.querySelectorAll('.obstacle').forEach((obstacle) => obstacle.remove());
+        dino.style.transform = 'translateY(0)';
+        dino.classList.remove('jump');
+        clearInterval(obstacleTimer);
+        clearInterval(scoreTimer);
+        startObstacleLoop();
+        startScoreLoop();
+      }
+
+      function startObstacleLoop() {
+        obstacleTimer = setInterval(createObstacle, 1500);
+      }
+
+      function startScoreLoop() {
+        scoreTimer = setInterval(() => {
+          if (isGameOver) return;
+          score += 1;
+          scoreElement.textContent = score;
+          if (score % 100 === 0) {
+            speed += 0.5;
+          }
+        }, 120);
+      }
+
+      function createObstacle() {
+        if (isGameOver) return;
+        const obstacle = document.createElement('div');
+        obstacle.classList.add('obstacle');
+        const size = Math.random() > 0.65 ? 28 : 18;
+        obstacle.style.height = `${size + 20}px`;
+        obstacle.style.width = `${size}px`;
+        obstacle.style.right = '-40px';
+        obstacle.dataset.x = '100';
+        gameBoard.appendChild(obstacle);
+
+        const moveInterval = setInterval(() => {
+          if (isGameOver) {
+            clearInterval(moveInterval);
+            return;
+          }
+
+          const currentX = parseFloat(obstacle.dataset.x);
+          const nextX = currentX - speed * 0.7;
+          obstacle.dataset.x = nextX;
+          obstacle.style.right = `${100 - nextX}%`;
+
+          if (nextX < -10) {
+            obstacle.remove();
+            clearInterval(moveInterval);
+            return;
+          }
+
+          const dinoRect = dino.getBoundingClientRect();
+          const obstacleRect = obstacle.getBoundingClientRect();
+          if (
+            dinoRect.right > obstacleRect.left + 4 &&
+            dinoRect.left < obstacleRect.right - 4 &&
+            dinoRect.bottom > obstacleRect.top + 4
+          ) {
+            endGame();
+            clearInterval(moveInterval);
+          }
+        }, 20);
+      }
+
+      function jump() {
+        if (isJumping || isGameOver) return;
+        isJumping = true;
+        dino.classList.add('jump');
+        setTimeout(() => {
+          dino.classList.remove('jump');
+          isJumping = false;
+        }, 520);
+      }
+
+      function endGame() {
+        isGameOver = true;
+        messageElement.textContent = 'Game Over! Drücke „Neu starten“, um es nochmal zu versuchen.';
+      }
+
+      document.addEventListener('keydown', (event) => {
+        if (event.code === 'Space') {
+          event.preventDefault();
+          if (isGameOver) {
+            resetGame();
+          } else {
+            jump();
+          }
+        }
+      });
+
+      document.addEventListener('touchstart', (event) => {
+        event.preventDefault();
+        if (isGameOver) {
+          resetGame();
+        } else {
+          jump();
+        }
+      }, { passive: false });
+
+      restartButton.addEventListener('click', resetGame);
+
+      resetGame();
+    </script>
   </body>
 </html>
