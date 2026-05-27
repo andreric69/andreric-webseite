@@ -362,7 +362,7 @@
             }
 
             // apply transform: translateX to move slightly forward during jump
-            dino.style.transform = `translate(${Math.min(dinoX, 60)}px, ${-dinoY}px) rotate(${vy * 2}deg)`;
+            dino.style.transform = `translate(${Math.min(dinoX, 60)}px, ${dinoY}px) rotate(${vy * 2}deg)`;
           } else {
             // ensure dino rests at baseline
             dinoX = 0;
