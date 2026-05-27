@@ -106,6 +106,57 @@
         height: 44px;
         background: #414141;
         border-radius: 6px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+      }
+
+      /* Rock - white geometric stone */
+      .obstacle.rock {
+        background: #ffffff;
+        width: 40px;
+        height: 28px;
+        border-radius: 6px;
+        clip-path: polygon(50% 0%, 100% 30%, 85% 100%, 15% 100%, 0% 30%);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.08), inset -6px -4px 0 rgba(0,0,0,0.04);
+        border: 2px solid rgba(0,0,0,0.06);
+      }
+
+      /* Cactus - green with arms */
+      .obstacle.cactus {
+        background: linear-gradient(#2f9a44,#227a35);
+        width: 22px;
+        height: 54px;
+        border-radius: 8px;
+        position: relative;
+      }
+
+      .obstacle.cactus::before,
+      .obstacle.cactus::after {
+        content: '';
+        position: absolute;
+        background: inherit;
+        width: 12px;
+        height: 18px;
+        border-radius: 8px;
+        left: -10px;
+        top: 8px;
+      }
+
+      .obstacle.cactus::after {
+        left: auto;
+        right: -10px;
+        top: 18px;
+      }
+
+      /* Spike - sharp triangular obstacle */
+      .obstacle.spike {
+        width: 28px;
+        height: 28px;
+        background: linear-gradient(180deg,#f6a700,#f36d00);
+        clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+        border-radius: 2px;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.12);
       }
 
       .scoreboard {
@@ -194,17 +245,32 @@
       let obstacleTimer;
       let scoreTimer;
 
+      // physics for smoother parabolic jump + forward motion
+      let dinoY = 0; // vertical position (px)
+      let dinoX = 0; // horizontal offset during jump (px)
+      let vy = 0; // vertical velocity
+      let vx = 0; // horizontal velocity during jump
+      const gravity = 0.8;
+      const jumpPower = 14;
+      const forwardImpulse = 3.2;
+      let animationId = null;
+
       function resetGame() {
         score = 0;
         isJumping = false;
         isGameOver = false;
-        speed = 8;
+        speed = 6;
         scoreElement.textContent = '0';
         messageElement.textContent = 'Drücke Leertaste oder tippe, um zu springen.';
         document.querySelectorAll('.obstacle').forEach((obstacle) => obstacle.remove());
-        dino.style.transform = 'translateY(0)';
+        dino.style.transform = 'translate(0px, 0px)';
         dino.classList.remove('jump');
         dino.classList.remove('land');
+        dinoY = 0;
+        dinoX = 0;
+        vy = 0;
+        vx = 0;
+        stopGameLoop();
         clearInterval(obstacleTimer);
         clearInterval(scoreTimer);
         startObstacleLoop();
@@ -230,10 +296,24 @@
         if (isGameOver) return;
         const obstacle = document.createElement('div');
         obstacle.classList.add('obstacle');
-        const size = Math.random() > 0.65 ? 28 : 18;
-        obstacle.style.height = `${size + 20}px`;
-        obstacle.style.width = `${size}px`;
-        obstacle.style.right = '-40px';
+
+        // choose type
+        const r = Math.random();
+        if (r < 0.45) {
+          obstacle.classList.add('rock');
+        } else if (r < 0.8) {
+          obstacle.classList.add('cactus');
+        } else {
+          obstacle.classList.add('spike');
+        }
+
+        // size variations
+        const w = obstacle.classList.contains('rock') ? 40 : (obstacle.classList.contains('spike') ? 28 : 22);
+        const h = obstacle.classList.contains('cactus') ? 54 : (obstacle.classList.contains('rock') ? 28 : 28);
+        obstacle.style.width = `${w}px`;
+        obstacle.style.height = `${h}px`;
+
+        obstacle.style.right = '-60px';
         obstacle.dataset.x = '100';
         gameBoard.appendChild(obstacle);
 
@@ -244,11 +324,11 @@
           }
 
           const currentX = parseFloat(obstacle.dataset.x);
-          const nextX = currentX - speed * 0.55;
+          const nextX = currentX - speed * 0.5;
           obstacle.dataset.x = nextX;
           obstacle.style.right = `${100 - nextX}%`;
 
-          if (nextX < -10) {
+          if (nextX < -12) {
             obstacle.remove();
             clearInterval(moveInterval);
             return;
@@ -257,28 +337,64 @@
           const dinoRect = dino.getBoundingClientRect();
           const obstacleRect = obstacle.getBoundingClientRect();
           if (
-            dinoRect.right > obstacleRect.left + 4 &&
-            dinoRect.left < obstacleRect.right - 4 &&
-            dinoRect.bottom > obstacleRect.top + 4
+            dinoRect.right > obstacleRect.left + 6 &&
+            dinoRect.left < obstacleRect.right - 6 &&
+            dinoRect.bottom > obstacleRect.top + 6
           ) {
             endGame();
             clearInterval(moveInterval);
           }
-        }, 20);
+        }, 18);
+      }
+
+      function startGameLoop() {
+        if (animationId) return;
+        function loop() {
+          // update physics
+          if (isJumping) {
+            vy += gravity;
+            dinoY += vy;
+            dinoX += vx;
+
+            if (dinoY >= 0) {
+              // landed
+              dinoY = 0;
+              vy = 0;
+              vx = 0;
+              isJumping = false;
+              // landing squash
+              dino.classList.add('land');
+              setTimeout(() => dino.classList.remove('land'), 180);
+            }
+
+            // apply transform: translateX to move slightly forward during jump
+            dino.style.transform = `translate(${Math.min(dinoX, 60)}px, ${-dinoY}px) rotate(${vy * 2}deg)`;
+          } else {
+            // ensure dino rests at baseline
+            dinoX = 0;
+            dino.style.transform = `translate(0px, 0px) rotate(0deg)`;
+          }
+
+          animationId = requestAnimationFrame(loop);
+        }
+
+        animationId = requestAnimationFrame(loop);
+      }
+
+      function stopGameLoop() {
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+          animationId = null;
+        }
       }
 
       function jump() {
         if (isJumping || isGameOver) return;
         isJumping = true;
         dino.classList.remove('land');
-        dino.classList.add('jump');
-        setTimeout(() => {
-          dino.classList.remove('jump');
-          // kurze Landungs-Effekte
-          dino.classList.add('land');
-          setTimeout(() => dino.classList.remove('land'), 180);
-          isJumping = false;
-        }, 520);
+        vy = -jumpPower;
+        vx = forwardImpulse;
+        startGameLoop();
       }
 
       function endGame() {
