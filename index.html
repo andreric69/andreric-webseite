@@ -428,8 +428,8 @@
       }
 
       function jump() {
+        if (isJumping) return;
         if (!isRunning) startGame();
-        if (!isRunning || isJumping) return;
         isJumping = true;
         velocityY = -jumpStrength;
       }
@@ -447,11 +447,14 @@
       restartButton.addEventListener('click', resetGame);
 
       document.addEventListener('keydown', (event) => {
-        if (event.code === 'Space') {
+        const key = event.code || event.key;
+        if (key === 'Space' || key === 'Spacebar' || key === ' ') {
           event.preventDefault();
           jump();
         }
       });
+
+      gameBoard.addEventListener('click', jump);
 
       document.addEventListener('touchstart', (event) => {
         event.preventDefault();
