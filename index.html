@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dinosaurier Spiel</title>
+    <title>Dino Dash</title>
     <style>
       * {
         margin: 0;
@@ -13,46 +13,49 @@
 
       body {
         font-family: Inter, system-ui, sans-serif;
-        background: linear-gradient(180deg, #87ceeb 0%, #c8f3ff 50%, #f5f5f5 100%);
+        background: radial-gradient(circle at top, #a2d9ff 0%, #7bbcf8 45%, #264e8f 100%);
         min-height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 20px;
-        color: #333;
+        color: #0f172a;
       }
 
       .container {
-        width: min(950px, 100%);
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 24px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+        width: min(980px, 100%);
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        border-radius: 28px;
+        box-shadow: 0 28px 90px rgba(15, 23, 42, 0.18);
         overflow: hidden;
       }
 
       header {
-        padding: 24px 28px 0;
+        padding: 28px 32px 0;
       }
 
       h1 {
-        font-size: clamp(2rem, 2.4vw, 3rem);
-        margin-bottom: 12px;
+        font-size: clamp(2.2rem, 3vw, 3.4rem);
+        letter-spacing: -0.03em;
+        margin-bottom: 14px;
+        color: #0f172a;
       }
 
       p {
-        margin-bottom: 20px;
-        max-width: 720px;
-        line-height: 1.6;
-        color: #555;
+        margin-bottom: 22px;
+        max-width: 760px;
+        line-height: 1.7;
+        color: #334155;
       }
 
       .game-board {
         position: relative;
         width: 100%;
-        height: 260px;
-        background: linear-gradient(180deg, #e8f6ff 0%, #e1f2ff 35%, #f5f5f5 100%);
-        border-top: 4px solid #9ecbe1;
-        border-bottom: 4px solid #9ecbe1;
+        height: 300px;
+        background: linear-gradient(180deg, #e6f4ff 0%, #f2f9ff 45%, #f8fafb 100%);
+        border-top: 5px solid rgba(37, 99, 235, 0.18);
+        border-bottom: 5px solid rgba(37, 99, 235, 0.18);
         overflow: hidden;
       }
 
@@ -61,366 +64,399 @@
         left: 0;
         right: 0;
         bottom: 0;
-        height: 28px;
-        background: linear-gradient(90deg, #7a9fbc 0%, #a4c4e1 100%);
+        height: 32px;
+        background: linear-gradient(90deg, #88b5eb 0%, #acc8ed 100%);
       }
 
       .dino {
         position: absolute;
-        bottom: 28px;
-        left: 48px;
-        width: 48px;
-        height: 48px;
-        background: #333;
-        border-radius: 12px;
-        box-shadow: inset -8px -6px 0 rgba(255, 255, 255, 0.18);
-        transition: transform 0.12s ease-out;
+        bottom: 32px;
+        left: 58px;
+        width: 52px;
+        height: 52px;
+        background: linear-gradient(180deg, #111827 0%, #1f2937 100%);
+        border-radius: 14px;
+        box-shadow: inset -6px -6px 0 rgba(255, 255, 255, 0.08), 0 18px 28px rgba(15, 23, 42, 0.18);
         transform-origin: center bottom;
       }
 
-      .dino.jump {
-        animation: jump 520ms cubic-bezier(.2,.8,.2,1) forwards;
+      .dino.running {
+        animation: run-step 0.42s steps(2) infinite;
       }
 
-
-      @keyframes jump {
-        0% { transform: translateY(0) rotate(0) scale(1,1); }
-        30% { transform: translateY(-120px) rotate(-15deg) scale(1.06,0.94); }
-        60% { transform: translateY(-60px) rotate(-6deg) scale(0.98,1.02); }
-        100% { transform: translateY(0) rotate(0) scale(1,1); }
+      @keyframes run-step {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(0, -3px) scale(1.02, 0.98); }
       }
-
-      
 
       .obstacle {
         position: absolute;
-        bottom: 28px;
-        width: 18px;
-        height: 44px;
-        background: #414141;
-        border-radius: 6px;
-        display: flex;
-        align-items: flex-end;
-        justify-content: center;
+        bottom: 32px;
+        display: grid;
+        align-items: end;
+        justify-items: center;
+        will-change: transform;
       }
 
-      /* Rock - white geometric stone */
       .obstacle.rock {
-        background: #ffffff;
-        width: 40px;
-        height: 28px;
-        border-radius: 6px;
-        clip-path: polygon(50% 0%, 100% 30%, 85% 100%, 15% 100%, 0% 30%);
-        box-shadow: 0 6px 12px rgba(0,0,0,0.08), inset -6px -4px 0 rgba(0,0,0,0.04);
-        border: 2px solid rgba(0,0,0,0.06);
+        width: 44px;
+        height: 30px;
+        background: linear-gradient(180deg, #fbfbfb 0%, #e5e9f1 100%);
+        border-radius: 12px;
+        clip-path: polygon(50% 0%, 100% 28%, 84% 100%, 16% 100%, 0% 28%);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
       }
 
-      /* Cactus - green with arms */
       .obstacle.cactus {
-        background: linear-gradient(#2f9a44,#227a35);
-        width: 22px;
-        height: 54px;
-        border-radius: 8px;
-        position: relative;
+        width: 24px;
+        height: 58px;
+        background: linear-gradient(180deg, #4dbb78 0%, #2c7c42 100%);
+        border-radius: 16px;
       }
 
       .obstacle.cactus::before,
       .obstacle.cactus::after {
         content: '';
         position: absolute;
-        background: inherit;
         width: 12px;
         height: 18px;
-        border-radius: 8px;
-        left: -10px;
-        top: 8px;
+        background: inherit;
+        border-radius: 10px;
+      }
+
+      .obstacle.cactus::before {
+        left: -12px;
+        top: 12px;
       }
 
       .obstacle.cactus::after {
-        left: auto;
-        right: -10px;
-        top: 18px;
+        right: -12px;
+        top: 24px;
       }
 
-      /* Spike - sharp triangular obstacle */
       .obstacle.spike {
-        width: 28px;
-        height: 28px;
-        background: linear-gradient(180deg,#f6a700,#f36d00);
+        width: 30px;
+        height: 30px;
+        background: linear-gradient(180deg, #ffd47d 0%, #f8a84c 100%);
         clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
-        border-radius: 2px;
-        box-shadow: 0 6px 12px rgba(0,0,0,0.12);
+        box-shadow: 0 10px 26px rgba(15, 23, 42, 0.1);
       }
 
       .scoreboard {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 18px;
+        padding: 22px 32px 0;
+      }
+
+      .score-info {
         display: flex;
-        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 14px;
         align-items: center;
-        padding: 20px 28px 24px;
       }
 
       .score {
-        font-size: 1.1rem;
-        font-weight: 700;
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: #0f172a;
       }
 
-      .message {
-        color: #0c4a64;
+      .status {
+        color: #475569;
+        min-width: 200px;
       }
 
-      .hint {
-        margin-top: 6px;
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        justify-content: end;
+        align-items: center;
+      }
+
+      .slider-group {
+        display: grid;
+        gap: 10px;
+        min-width: 220px;
+      }
+
+      label {
         font-size: 0.95rem;
-        color: #5a7184;
+        color: #475569;
+      }
+
+      input[type='range'] {
+        width: 100%;
       }
 
       .button {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
-        padding: 10px 18px;
+        gap: 10px;
+        padding: 12px 24px;
         border-radius: 999px;
         border: none;
         color: #fff;
-        background: #0f5fab;
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
         cursor: pointer;
-        font-weight: 700;
-        transition: transform 0.15s ease, background 0.2s ease;
+        font-weight: 800;
+        transition: transform 0.15s ease, box-shadow 0.2s ease;
       }
 
       .button:hover {
         transform: translateY(-1px);
-        background: #0d4d93;
+        box-shadow: 0 16px 28px rgba(37, 99, 235, 0.22);
       }
 
       .footer {
-        padding: 0 28px 24px;
-        color: #5a7184;
+        padding: 0 32px 28px;
+        color: #475569;
         font-size: 0.95rem;
+      }
+
+      .intro-box {
+        display: grid;
+        gap: 14px;
+        padding: 0 32px 20px;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+      }
+
+      .help {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #475569;
+      }
+
+      .help span {
+        width: 10px;
+        height: 10px;
+        background: #2563eb;
+        border-radius: 50%;
+      }
+
+      @media (max-width: 700px) {
+        .scoreboard {
+          grid-template-columns: 1fr;
+        }
+
+        .controls {
+          justify-content: stretch;
+        }
       }
     </style>
   </head>
   <body>
     <div class="container">
       <header>
-        <h1>Dinosaurier Spiel</h1>
-        <p>Springe über die Hindernisse wie beim bekannten Google Chrome Offline-Spiel. Verwende die Leertaste oder tippe auf den Bildschirm, um zu springen.</p>
+        <h1>Dino Dash</h1>
       </header>
-
+      <div class="intro-box">
+        <p>Springe über stylische Hindernisse und passe die Geschwindigkeit an. Tippe oder drücke die Leertaste zum Springen.</p>
+        <div class="help"><span></span> Bei Spielstart bewegt sich das Spielfeld.</div>
+      </div>
       <div class="game-board" id="gameBoard">
-        <div class="dino" id="dino"></div>
+        <div class="dino running" id="dino"></div>
         <div class="ground"></div>
       </div>
-
       <div class="scoreboard">
-        <div class="score">Punkte: <span id="score">0</span></div>
-        <button class="button" id="restartButton">Neu starten</button>
+        <div class="score-info">
+          <div class="score">Punkte: <strong id="score">0</strong></div>
+          <div class="status" id="status">Bereit</div>
+        </div>
+        <div class="controls">
+          <div class="slider-group">
+            <label for="speedRange">Geschwindigkeit: <strong id="speedValue">8</strong></label>
+            <input id="speedRange" type="range" min="4" max="14" value="8" />
+          </div>
+          <button class="button" id="restartButton">Neu starten</button>
+        </div>
       </div>
-
-      <div class="footer">
-        <div class="message" id="message">Drücke Leertaste oder tippe, um zu springen.</div>
-        <div class="hint">Wenn du gegen ein Hindernis stößt, kannst du mit „Neu starten“ wieder beginnen.</div>
-      </div>
+      <div class="footer">Tipp: Höhere Geschwindigkeit bringt mehr Punkte, aber auch mehr Herausforderung.</div>
     </div>
 
     <script>
-      const dino = document.getElementById('dino');
       const gameBoard = document.getElementById('gameBoard');
-      const scoreElement = document.getElementById('score');
-      const messageElement = document.getElementById('message');
+      const dino = document.getElementById('dino');
+      const scoreEl = document.getElementById('score');
+      const statusEl = document.getElementById('status');
       const restartButton = document.getElementById('restartButton');
+      const speedRange = document.getElementById('speedRange');
+      const speedValue = document.getElementById('speedValue');
 
       let score = 0;
+      let isRunning = false;
       let isJumping = false;
-      let isGameOver = false;
-      let speed = 5;
-      let obstacleTimer;
-      let scoreTimer;
-
-      // physics for smoother parabolic jump + forward motion
-      let dinoY = 0; // vertical position (px)
-      let dinoX = 0; // horizontal offset during jump (px)
-      let vy = 0; // vertical velocity
-      let vx = 0; // horizontal velocity during jump
-      const gravity = 0.8;
-      const jumpPower = 14;
-      const forwardImpulse = 3.2;
-      let animationId = null;
-      let isSquashing = false;
+      let velocityY = 0;
+      let jumpY = 0;
+      let gameSpeed = Number(speedRange.value);
+      let obstacleTimer = null;
+      let frameId = null;
+      let lastTime = null;
+      const gravity = 0.85;
+      const jumpStrength = 14;
+      const obstacles = [];
+      const spawnBase = 1800;
 
       function resetGame() {
         score = 0;
+        isRunning = false;
         isJumping = false;
-        isGameOver = false;
-        speed = 6;
-        scoreElement.textContent = '0';
-        messageElement.textContent = 'Drücke Leertaste oder tippe, um zu springen.';
-        document.querySelectorAll('.obstacle').forEach((obstacle) => obstacle.remove());
-        dino.style.transform = 'translate(0px, 0px)';
-        dino.classList.remove('jump');
-        dino.classList.remove('land');
-        dinoY = 0;
-        dinoX = 0;
-        vy = 0;
-        vx = 0;
-        stopGameLoop();
+        velocityY = 0;
+        jumpY = 0;
+        obstacles.length = 0;
+        gameBoard.querySelectorAll('.obstacle').forEach((node) => node.remove());
+        dino.style.transform = 'translate(0px, 0px) rotate(0deg)';
+        dino.classList.add('running');
+        scoreEl.textContent = score;
+        statusEl.textContent = 'Bereit';
+        stopLoop();
         clearInterval(obstacleTimer);
-        clearInterval(scoreTimer);
-        startObstacleLoop();
-        startScoreLoop();
       }
 
-      function startObstacleLoop() {
-        obstacleTimer = setInterval(createObstacle, 1700);
+      function startGame() {
+        if (isRunning) return;
+        isRunning = true;
+        statusEl.textContent = 'Spielt...';
+        const interval = Math.max(900, spawnBase - (gameSpeed - 4) * 90);
+        obstacleTimer = setInterval(createObstacle, interval);
+        lastTime = null;
+        frameId = requestAnimationFrame(gameLoop);
       }
 
-      function startScoreLoop() {
-        scoreTimer = setInterval(() => {
-          if (isGameOver) return;
-          score += 1;
-          scoreElement.textContent = score;
-          if (score % 150 === 0) {
-            speed += 0.4;
-          }
-        }, 140);
+      function stopLoop() {
+        if (frameId) {
+          cancelAnimationFrame(frameId);
+          frameId = null;
+        }
       }
 
       function createObstacle() {
-        if (isGameOver) return;
+        if (!isRunning) return;
         const obstacle = document.createElement('div');
         obstacle.classList.add('obstacle');
-
-        // choose type
-        const r = Math.random();
-        if (r < 0.45) {
+        const type = Math.random();
+        if (type < 0.4) {
           obstacle.classList.add('rock');
-        } else if (r < 0.8) {
+        } else if (type < 0.75) {
           obstacle.classList.add('cactus');
         } else {
           obstacle.classList.add('spike');
         }
 
-        // size variations
-        const w = obstacle.classList.contains('rock') ? 40 : (obstacle.classList.contains('spike') ? 28 : 22);
-        const h = obstacle.classList.contains('cactus') ? 54 : (obstacle.classList.contains('rock') ? 28 : 28);
-        obstacle.style.width = `${w}px`;
-        obstacle.style.height = `${h}px`;
-
-        obstacle.style.right = '-60px';
-        obstacle.dataset.x = '100';
+        const boardWidth = gameBoard.clientWidth;
+        obstacle.style.left = `${boardWidth + 20}px`;
         gameBoard.appendChild(obstacle);
-
-        const moveInterval = setInterval(() => {
-          if (isGameOver) {
-            clearInterval(moveInterval);
-            return;
-          }
-
-          const currentX = parseFloat(obstacle.dataset.x);
-          const nextX = currentX - speed * 0.5;
-          obstacle.dataset.x = nextX;
-          obstacle.style.right = `${100 - nextX}%`;
-
-          if (nextX < -12) {
-            obstacle.remove();
-            clearInterval(moveInterval);
-            return;
-          }
-
-          const dinoRect = dino.getBoundingClientRect();
-          const obstacleRect = obstacle.getBoundingClientRect();
-          if (
-            dinoRect.right > obstacleRect.left + 6 &&
-            dinoRect.left < obstacleRect.right - 6 &&
-            dinoRect.bottom > obstacleRect.top + 6
-          ) {
-            endGame();
-            clearInterval(moveInterval);
-          }
-        }, 18);
+        obstacles.push({ node: obstacle, x: boardWidth + 20, width: obstacle.offsetWidth });
       }
 
-      function startGameLoop() {
-        if (animationId) return;
-        function loop() {
-          // update physics
-          if (isJumping) {
-            vy += gravity;
-            dinoY += vy;
-            dinoX += vx;
+      function gameLoop(timestamp) {
+        if (!isRunning) return;
+        if (!lastTime) lastTime = timestamp;
+        const delta = Math.min((timestamp - lastTime) / 16.67, 2);
+        lastTime = timestamp;
 
-            if (dinoY >= 0) {
-              // landed
-              dinoY = 0;
-              vy = 0;
-              vx = 0;
-              isJumping = false;
-              // trigger JS-controlled squash (so CSS animation won't overwrite inline transform)
-              isSquashing = true;
-              setTimeout(() => { isSquashing = false; }, 180);
-            }
+        updateDino(delta);
+        updateObstacles(delta);
+        updateScore(delta);
 
-            // apply transform: translateX to move slightly forward during jump
-            dino.style.transform = `translate(${Math.min(dinoX, 60)}px, ${dinoY}px) rotate(${vy * 2}deg)`;
+        frameId = requestAnimationFrame(gameLoop);
+      }
+
+      function updateDino(delta) {
+        if (isJumping) {
+          velocityY += gravity * delta;
+          jumpY += velocityY * delta;
+          if (jumpY >= 0) {
+            jumpY = 0;
+            velocityY = 0;
+            isJumping = false;
+            dino.style.transform = 'translate(0px, 0px) scale(1.15, 0.82)';
+            setTimeout(() => {
+              if (!isJumping) dino.style.transform = 'translate(0px, 0px) rotate(0deg)';
+            }, 130);
           } else {
-            // ensure dino rests at baseline
-            dinoX = 0;
-            if (isSquashing) {
-              dino.style.transform = `translate(0px, 0px) scale(1.15,0.82)`;
-            } else {
-              dino.style.transform = `translate(0px, 0px) rotate(0deg)`;
-            }
+            const forward = Math.min(70, Math.abs(jumpY) * 0.75);
+            const tilt = Math.max(-15, Math.min(10, -velocityY * 1.6));
+            dino.style.transform = `translate(${forward}px, ${jumpY}px) rotate(${tilt}deg)`;
           }
-
-          animationId = requestAnimationFrame(loop);
         }
-
-        animationId = requestAnimationFrame(loop);
       }
 
-      function stopGameLoop() {
-        if (animationId) {
-          cancelAnimationFrame(animationId);
-          animationId = null;
+      function updateObstacles(delta) {
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+          const obs = obstacles[i];
+          obs.x -= gameSpeed * 4 * delta;
+          obs.node.style.left = `${obs.x}px`;
+
+          if (obs.x + obs.width < -20) {
+            obs.node.remove();
+            obstacles.splice(i, 1);
+            continue;
+          }
+
+          if (checkCollision(obs.node)) {
+            finishGame();
+            return;
+          }
         }
+      }
+
+      function checkCollision(obstacle) {
+        const dRect = dino.getBoundingClientRect();
+        const oRect = obstacle.getBoundingClientRect();
+        return (
+          dRect.right > oRect.left + 6 &&
+          dRect.left < oRect.right - 6 &&
+          dRect.bottom > oRect.top + 6
+        );
+      }
+
+      function updateScore(delta) {
+        score += Math.round(delta * gameSpeed * 0.4);
+        scoreEl.textContent = score;
+      }
+
+      function finishGame() {
+        isRunning = false;
+        statusEl.textContent = 'Game Over';
+        dino.classList.remove('running');
+        clearInterval(obstacleTimer);
+        stopLoop();
       }
 
       function jump() {
-        if (isJumping || isGameOver) return;
+        if (!isRunning) startGame();
+        if (!isRunning || isJumping) return;
         isJumping = true;
-        dino.classList.remove('land');
-        vy = -jumpPower;
-        vx = forwardImpulse;
-        startGameLoop();
+        velocityY = -jumpStrength;
       }
 
-      function endGame() {
-        isGameOver = true;
-        messageElement.textContent = 'Game Over! Drücke „Neu starten“, um es nochmal zu versuchen.';
-      }
+      speedRange.addEventListener('input', () => {
+        gameSpeed = Number(speedRange.value);
+        speedValue.textContent = gameSpeed;
+        if (isRunning) {
+          clearInterval(obstacleTimer);
+          const interval = Math.max(900, spawnBase - (gameSpeed - 4) * 90);
+          obstacleTimer = setInterval(createObstacle, interval);
+        }
+      });
+
+      restartButton.addEventListener('click', resetGame);
 
       document.addEventListener('keydown', (event) => {
         if (event.code === 'Space') {
           event.preventDefault();
-          if (isGameOver) {
-            resetGame();
-          } else {
-            jump();
-          }
+          jump();
         }
       });
 
       document.addEventListener('touchstart', (event) => {
         event.preventDefault();
-        if (isGameOver) {
-          resetGame();
-        } else {
-          jump();
-        }
+        jump();
       }, { passive: false });
-
-      restartButton.addEventListener('click', resetGame);
 
       resetGame();
     </script>
