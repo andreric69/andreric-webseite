@@ -82,9 +82,6 @@
         animation: jump 520ms cubic-bezier(.2,.8,.2,1) forwards;
       }
 
-      .dino.land {
-        animation: land 180ms ease-out forwards;
-      }
 
       @keyframes jump {
         0% { transform: translateY(0) rotate(0) scale(1,1); }
@@ -93,11 +90,7 @@
         100% { transform: translateY(0) rotate(0) scale(1,1); }
       }
 
-      @keyframes land {
-        0% { transform: translateY(0) scale(1,1); }
-        40% { transform: translateY(0) scale(1.15,0.82); }
-        100% { transform: translateY(0) scale(1,1); }
-      }
+      
 
       .obstacle {
         position: absolute;
@@ -254,6 +247,7 @@
       const jumpPower = 14;
       const forwardImpulse = 3.2;
       let animationId = null;
+      let isSquashing = false;
 
       function resetGame() {
         score = 0;
@@ -362,9 +356,9 @@
               vy = 0;
               vx = 0;
               isJumping = false;
-              // landing squash
-              dino.classList.add('land');
-              setTimeout(() => dino.classList.remove('land'), 180);
+              // trigger JS-controlled squash (so CSS animation won't overwrite inline transform)
+              isSquashing = true;
+              setTimeout(() => { isSquashing = false; }, 180);
             }
 
             // apply transform: translateX to move slightly forward during jump
@@ -372,7 +366,11 @@
           } else {
             // ensure dino rests at baseline
             dinoX = 0;
-            dino.style.transform = `translate(0px, 0px) rotate(0deg)`;
+            if (isSquashing) {
+              dino.style.transform = `translate(0px, 0px) scale(1.15,0.82)`;
+            } else {
+              dino.style.transform = `translate(0px, 0px) rotate(0deg)`;
+            }
           }
 
           animationId = requestAnimationFrame(loop);
