@@ -75,16 +75,28 @@
         border-radius: 12px;
         box-shadow: inset -8px -6px 0 rgba(255, 255, 255, 0.18);
         transition: transform 0.12s ease-out;
+        transform-origin: center bottom;
       }
 
       .dino.jump {
-        animation: jump 400ms ease-out forwards;
+        animation: jump 520ms cubic-bezier(.2,.8,.2,1) forwards;
+      }
+
+      .dino.land {
+        animation: land 180ms ease-out forwards;
       }
 
       @keyframes jump {
-        0% { transform: translateY(0); }
-        40% { transform: translateY(-120px); }
-        100% { transform: translateY(0); }
+        0% { transform: translateY(0) rotate(0) scale(1,1); }
+        30% { transform: translateY(-120px) rotate(-15deg) scale(1.06,0.94); }
+        60% { transform: translateY(-60px) rotate(-6deg) scale(0.98,1.02); }
+        100% { transform: translateY(0) rotate(0) scale(1,1); }
+      }
+
+      @keyframes land {
+        0% { transform: translateY(0) scale(1,1); }
+        40% { transform: translateY(0) scale(1.15,0.82); }
+        100% { transform: translateY(0) scale(1,1); }
       }
 
       .obstacle {
@@ -178,7 +190,7 @@
       let score = 0;
       let isJumping = false;
       let isGameOver = false;
-      let speed = 8;
+      let speed = 5;
       let obstacleTimer;
       let scoreTimer;
 
@@ -192,6 +204,7 @@
         document.querySelectorAll('.obstacle').forEach((obstacle) => obstacle.remove());
         dino.style.transform = 'translateY(0)';
         dino.classList.remove('jump');
+        dino.classList.remove('land');
         clearInterval(obstacleTimer);
         clearInterval(scoreTimer);
         startObstacleLoop();
@@ -199,7 +212,7 @@
       }
 
       function startObstacleLoop() {
-        obstacleTimer = setInterval(createObstacle, 1500);
+        obstacleTimer = setInterval(createObstacle, 1700);
       }
 
       function startScoreLoop() {
@@ -207,10 +220,10 @@
           if (isGameOver) return;
           score += 1;
           scoreElement.textContent = score;
-          if (score % 100 === 0) {
-            speed += 0.5;
+          if (score % 150 === 0) {
+            speed += 0.4;
           }
-        }, 120);
+        }, 140);
       }
 
       function createObstacle() {
@@ -231,7 +244,7 @@
           }
 
           const currentX = parseFloat(obstacle.dataset.x);
-          const nextX = currentX - speed * 0.7;
+          const nextX = currentX - speed * 0.55;
           obstacle.dataset.x = nextX;
           obstacle.style.right = `${100 - nextX}%`;
 
@@ -257,9 +270,13 @@
       function jump() {
         if (isJumping || isGameOver) return;
         isJumping = true;
+        dino.classList.remove('land');
         dino.classList.add('jump');
         setTimeout(() => {
           dino.classList.remove('jump');
+          // kurze Landungs-Effekte
+          dino.classList.add('land');
+          setTimeout(() => dino.classList.remove('land'), 180);
           isJumping = false;
         }, 520);
       }
